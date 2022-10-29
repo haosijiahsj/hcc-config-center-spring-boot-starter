@@ -1,0 +1,5 @@
+org.springframework.boot.env.EnvironmentPostProcessor=\
+com.hcc.config.center.autoconfigure.ConfigCenterEnvironmentPostProcessor
+
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.hcc.config.center.autoconfigure.ConfigCenterAutoConfiguration
