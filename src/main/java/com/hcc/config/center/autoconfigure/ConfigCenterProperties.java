@@ -30,6 +30,10 @@ public class ConfigCenterProperties {
      */
     private Boolean enableDynamicPush = false;
     /**
+     * 是否检查配置在配置中心存在，为true则检查不存在抛出异常
+     */
+    private Boolean checkConfigExist = true;
+    /**
      * 拉取时间间隔，默认5分钟
      */
     private Integer pullInterval = 300;

@@ -3,3 +3,6 @@ com.hcc.config.center.autoconfigure.ConfigCenterEnvironmentPostProcessor
 
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 com.hcc.config.center.autoconfigure.ConfigCenterAutoConfiguration
+
+org.springframework.context.ApplicationListener=\
+com.hcc.config.center.autoconfigure.ConfigCenterEnvironmentPostProcessor

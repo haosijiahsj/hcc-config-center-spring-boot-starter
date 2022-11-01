@@ -7,6 +7,7 @@ import com.hcc.config.center.client.entity.AppMode;
 import com.hcc.config.center.client.spring.ConfigCenterBeanPostProcessor;
 import com.hcc.config.center.client.spring.ConfigCenterClientInitializer;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -14,6 +15,8 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.Assert;
+
+import javax.annotation.PreDestroy;
 
 /**
  * 配置中心自动配置
@@ -47,6 +50,9 @@ public class ConfigCenterAutoConfiguration {
         if (configCenterProperties.getEnableDynamicPush() != null) {
             configContext.setEnableDynamicPush(configCenterProperties.getEnableDynamicPush());
         }
+        if (configCenterProperties.getCheckConfigExist() != null) {
+            configContext.setCheckConfigExist(configCenterProperties.getCheckConfigExist());
+        }
         if (configCenterProperties.getPullInterval() != null) {
             configContext.setPullInterval(configCenterProperties.getPullInterval());
         }
@@ -68,6 +74,7 @@ public class ConfigCenterAutoConfiguration {
      * @return
      */
     @Bean("hccConfigCenterConfigService")
+    @ConditionalOnMissingBean
     public ConfigService configService() {
         return new ConfigService(configContext);
     }
@@ -77,6 +84,7 @@ public class ConfigCenterAutoConfiguration {
      * @return
      */
     @Bean
+    @ConditionalOnMissingBean
     public ConfigCenterBeanPostProcessor configCenterBeanPostProcessor() {
         return new ConfigCenterBeanPostProcessor(configContext);
     }
@@ -87,16 +95,8 @@ public class ConfigCenterAutoConfiguration {
      * @return
      */
     @Bean
+    @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "config.center.enableDynamicPush", havingValue = "true")
-    public ConfigCenterClientInitializer configCenterClientInitializer(ObjectProvider<ProcessFailedCallBack> callBackObjectProvider) {
-        ProcessFailedCallBack callBack = callBackObjectProvider.getIfUnique(() -> new ProcessFailedCallBack() {});
-        ConfigCenterClientInitializer initializer = new ConfigCenterClientInitializer(configContext, callBack);
-        initializer.startClient();
-
-        return initializer;
-    }
-
-    @Bean
     public ConfigCenterInitializerListener configCenterInitializerListener(ObjectProvider<ProcessFailedCallBack> callBackObjectProvider) {
         ProcessFailedCallBack callBack = callBackObjectProvider.getIfUnique(() -> new ProcessFailedCallBack() {});
         return new ConfigCenterInitializerListener(callBack);
@@ -108,6 +108,7 @@ public class ConfigCenterAutoConfiguration {
     private class ConfigCenterInitializerListener implements ApplicationListener<ApplicationReadyEvent> {
 
         private final ProcessFailedCallBack callBack;
+        private ConfigCenterClientInitializer initializer;
 
         public ConfigCenterInitializerListener(ProcessFailedCallBack callBack) {
             this.callBack = callBack;
@@ -115,8 +116,15 @@ public class ConfigCenterAutoConfiguration {
 
         @Override
         public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
-            ConfigCenterClientInitializer initializer = new ConfigCenterClientInitializer(configContext, callBack);
+            initializer = new ConfigCenterClientInitializer(configContext, callBack);
             initializer.startClient();
+        }
+
+        @PreDestroy
+        private void stopClient() {
+            if (initializer != null) {
+                initializer.stopClient();
+            }
         }
 
     }
