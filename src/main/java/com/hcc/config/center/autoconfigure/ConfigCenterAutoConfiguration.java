@@ -2,6 +2,7 @@ package com.hcc.config.center.autoconfigure;
 
 import com.hcc.config.center.client.ConfigService;
 import com.hcc.config.center.client.ProcessFailedCallBack;
+import com.hcc.config.center.client.balance.ServerNodeChooser;
 import com.hcc.config.center.client.context.ConfigContext;
 import com.hcc.config.center.client.entity.AppMode;
 import com.hcc.config.center.client.spring.ConfigCenterBeanPostProcessor;
@@ -73,7 +74,7 @@ public class ConfigCenterAutoConfiguration {
      * 暴露ConfigService bean
      * @return
      */
-    @Bean("hccConfigCenterConfigService")
+    @Bean("configCenterConfigService")
     @ConditionalOnMissingBean
     public ConfigService configService() {
         return new ConfigService(configContext);
@@ -97,9 +98,11 @@ public class ConfigCenterAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "config.center.enableDynamicPush", havingValue = "true")
-    public ConfigCenterInitializerListener configCenterInitializerListener(ObjectProvider<ProcessFailedCallBack> callBackObjectProvider) {
-        ProcessFailedCallBack callBack = callBackObjectProvider.getIfUnique(() -> new ProcessFailedCallBack() {});
-        return new ConfigCenterInitializerListener(callBack);
+    public ConfigCenterInitializerListener configCenterInitializerListener(ObjectProvider<ProcessFailedCallBack> callBackObjectProvider,
+                                                                           ObjectProvider<ServerNodeChooser> serverNodeChooserObjectProvider) {
+        ProcessFailedCallBack callBack = callBackObjectProvider.getIfAvailable();
+        ServerNodeChooser serverNodeChooser = serverNodeChooserObjectProvider.getIfAvailable();
+        return new ConfigCenterInitializerListener(callBack, serverNodeChooser);
     }
 
     /**
@@ -108,15 +111,17 @@ public class ConfigCenterAutoConfiguration {
     private class ConfigCenterInitializerListener implements ApplicationListener<ApplicationReadyEvent> {
 
         private final ProcessFailedCallBack callBack;
+        private final ServerNodeChooser serverNodeChooser;
         private ConfigCenterClientInitializer initializer;
 
-        public ConfigCenterInitializerListener(ProcessFailedCallBack callBack) {
+        public ConfigCenterInitializerListener(ProcessFailedCallBack callBack, ServerNodeChooser serverNodeChooser) {
             this.callBack = callBack;
+            this.serverNodeChooser = serverNodeChooser;
         }
 
         @Override
         public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
-            initializer = new ConfigCenterClientInitializer(configContext, callBack);
+            initializer = new ConfigCenterClientInitializer(configContext, callBack, serverNodeChooser);
             initializer.startClient();
         }
 
