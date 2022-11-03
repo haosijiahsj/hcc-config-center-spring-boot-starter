@@ -34,12 +34,12 @@ public class ConfigCenterProperties {
      */
     private Boolean checkConfigExist = true;
     /**
-     * 拉取时间间隔，默认5分钟
+     * 拉取时间间隔，默认5分钟，单位s
      */
     private Integer pullInterval = 300;
     /**
-     * 长轮询hold时间
+     * 长轮询hold时间，单位s
      */
-    private Integer longPollingTimeout = 90000;
+    private Integer longPollingTimeout = 90;
 
 }
