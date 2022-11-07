@@ -1,7 +1,7 @@
 package com.hcc.config.center.autoconfigure;
 
 import com.hcc.config.center.client.ConfigService;
-import com.hcc.config.center.client.ProcessFailedCallBack;
+import com.hcc.config.center.client.ProcessDynamicConfigCallBack;
 import com.hcc.config.center.client.balance.ServerNodeChooser;
 import com.hcc.config.center.client.context.ConfigContext;
 import com.hcc.config.center.client.entity.AppMode;
@@ -98,9 +98,9 @@ public class ConfigCenterAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "config.center.enableDynamicPush", havingValue = "true")
-    public ConfigCenterInitializerListener configCenterInitializerListener(ObjectProvider<ProcessFailedCallBack> callBackObjectProvider,
+    public ConfigCenterInitializerListener configCenterInitializerListener(ObjectProvider<ProcessDynamicConfigCallBack> callBackObjectProvider,
                                                                            ObjectProvider<ServerNodeChooser> serverNodeChooserObjectProvider) {
-        ProcessFailedCallBack callBack = callBackObjectProvider.getIfAvailable();
+        ProcessDynamicConfigCallBack callBack = callBackObjectProvider.getIfAvailable();
         ServerNodeChooser serverNodeChooser = serverNodeChooserObjectProvider.getIfAvailable();
         return new ConfigCenterInitializerListener(callBack, serverNodeChooser);
     }
@@ -110,11 +110,11 @@ public class ConfigCenterAutoConfiguration {
      */
     private class ConfigCenterInitializerListener implements ApplicationListener<ApplicationReadyEvent> {
 
-        private final ProcessFailedCallBack callBack;
+        private final ProcessDynamicConfigCallBack callBack;
         private final ServerNodeChooser serverNodeChooser;
         private ConfigCenterClientInitializer initializer;
 
-        public ConfigCenterInitializerListener(ProcessFailedCallBack callBack, ServerNodeChooser serverNodeChooser) {
+        public ConfigCenterInitializerListener(ProcessDynamicConfigCallBack callBack, ServerNodeChooser serverNodeChooser) {
             this.callBack = callBack;
             this.serverNodeChooser = serverNodeChooser;
         }
