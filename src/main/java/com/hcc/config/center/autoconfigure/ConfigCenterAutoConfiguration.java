@@ -1,7 +1,7 @@
 package com.hcc.config.center.autoconfigure;
 
 import com.hcc.config.center.client.ConfigService;
-import com.hcc.config.center.client.ProcessDynamicConfigCallBack;
+import com.hcc.config.center.client.ProcessRefreshConfigCallBack;
 import com.hcc.config.center.client.context.ConfigContext;
 import com.hcc.config.center.client.entity.AppMode;
 import com.hcc.config.center.client.rebalance.ServerNodeChooser;
@@ -98,9 +98,9 @@ public class ConfigCenterAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "config.center.enableDynamicPush", havingValue = "true")
-    public ConfigCenterInitializerListener configCenterInitializerListener(ObjectProvider<ProcessDynamicConfigCallBack> callBackObjectProvider,
+    public ConfigCenterInitializerListener configCenterInitializerListener(ObjectProvider<ProcessRefreshConfigCallBack> callBackObjectProvider,
                                                                            ObjectProvider<ServerNodeChooser> serverNodeChooserObjectProvider) {
-        ProcessDynamicConfigCallBack callBack = callBackObjectProvider.getIfAvailable();
+        ProcessRefreshConfigCallBack callBack = callBackObjectProvider.getIfAvailable();
         ServerNodeChooser serverNodeChooser = serverNodeChooserObjectProvider.getIfAvailable();
         return new ConfigCenterInitializerListener(callBack, serverNodeChooser);
     }
@@ -110,11 +110,11 @@ public class ConfigCenterAutoConfiguration {
      */
     private class ConfigCenterInitializerListener implements ApplicationListener<ApplicationReadyEvent> {
 
-        private final ProcessDynamicConfigCallBack callBack;
+        private final ProcessRefreshConfigCallBack callBack;
         private final ServerNodeChooser serverNodeChooser;
         private ConfigCenterClientInitializer initializer;
 
-        public ConfigCenterInitializerListener(ProcessDynamicConfigCallBack callBack, ServerNodeChooser serverNodeChooser) {
+        public ConfigCenterInitializerListener(ProcessRefreshConfigCallBack callBack, ServerNodeChooser serverNodeChooser) {
             this.callBack = callBack;
             this.serverNodeChooser = serverNodeChooser;
         }
