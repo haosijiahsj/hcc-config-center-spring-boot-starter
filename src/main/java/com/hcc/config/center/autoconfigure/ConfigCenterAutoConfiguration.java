@@ -1,5 +1,6 @@
 package com.hcc.config.center.autoconfigure;
 
+import com.hcc.config.center.client.ConfigChangeHandler;
 import com.hcc.config.center.client.ConfigService;
 import com.hcc.config.center.client.ProcessRefreshConfigCallBack;
 import com.hcc.config.center.client.context.ConfigContext;
@@ -18,6 +19,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.util.Assert;
 
 import javax.annotation.PreDestroy;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * 配置中心自动配置
@@ -99,10 +102,12 @@ public class ConfigCenterAutoConfiguration {
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "config.center.enableDynamicPush", havingValue = "true")
     public ConfigCenterInitializerListener configCenterInitializerListener(ObjectProvider<ProcessRefreshConfigCallBack> callBackObjectProvider,
+                                                                           ObjectProvider<List<ConfigChangeHandler>> handlersObjectProvider,
                                                                            ObjectProvider<ServerNodeChooser> serverNodeChooserObjectProvider) {
         ProcessRefreshConfigCallBack callBack = callBackObjectProvider.getIfAvailable();
+        List<ConfigChangeHandler> configChangeHandlers = handlersObjectProvider.getIfAvailable(Collections::emptyList);
         ServerNodeChooser serverNodeChooser = serverNodeChooserObjectProvider.getIfAvailable();
-        return new ConfigCenterInitializerListener(callBack, serverNodeChooser);
+        return new ConfigCenterInitializerListener(callBack, configChangeHandlers, serverNodeChooser);
     }
 
     /**
@@ -111,17 +116,20 @@ public class ConfigCenterAutoConfiguration {
     private class ConfigCenterInitializerListener implements ApplicationListener<ApplicationReadyEvent> {
 
         private final ProcessRefreshConfigCallBack callBack;
+        private final List<ConfigChangeHandler> configChangeHandlers;
         private final ServerNodeChooser serverNodeChooser;
         private ConfigCenterClientInitializer initializer;
 
-        public ConfigCenterInitializerListener(ProcessRefreshConfigCallBack callBack, ServerNodeChooser serverNodeChooser) {
+        public ConfigCenterInitializerListener(ProcessRefreshConfigCallBack callBack, List<ConfigChangeHandler> handlers,
+                                               ServerNodeChooser serverNodeChooser) {
             this.callBack = callBack;
+            this.configChangeHandlers = handlers;
             this.serverNodeChooser = serverNodeChooser;
         }
 
         @Override
         public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
-            initializer = new ConfigCenterClientInitializer(configContext, callBack, serverNodeChooser);
+            initializer = new ConfigCenterClientInitializer(configContext, callBack, configChangeHandlers, serverNodeChooser);
             initializer.startClient();
         }
 
