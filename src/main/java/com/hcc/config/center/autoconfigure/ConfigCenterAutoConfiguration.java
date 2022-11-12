@@ -1,8 +1,9 @@
 package com.hcc.config.center.autoconfigure;
 
 import com.hcc.config.center.client.ConfigChangeHandler;
+import com.hcc.config.center.client.ConfigRefreshCallBack;
 import com.hcc.config.center.client.ConfigService;
-import com.hcc.config.center.client.ProcessRefreshConfigCallBack;
+import com.hcc.config.center.client.DefaultConfigServiceImpl;
 import com.hcc.config.center.client.context.ConfigContext;
 import com.hcc.config.center.client.entity.AppMode;
 import com.hcc.config.center.client.rebalance.ServerNodeChooser;
@@ -80,7 +81,7 @@ public class ConfigCenterAutoConfiguration {
     @Bean("configCenterConfigService")
     @ConditionalOnMissingBean
     public ConfigService configService() {
-        return new ConfigService(configContext);
+        return new DefaultConfigServiceImpl(configContext);
     }
 
     /**
@@ -101,10 +102,10 @@ public class ConfigCenterAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "config.center.enableDynamicPush", havingValue = "true")
-    public ConfigCenterInitializerListener configCenterInitializerListener(ObjectProvider<ProcessRefreshConfigCallBack> callBackObjectProvider,
+    public ConfigCenterInitializerListener configCenterInitializerListener(ObjectProvider<ConfigRefreshCallBack> callBackObjectProvider,
                                                                            ObjectProvider<List<ConfigChangeHandler>> handlersObjectProvider,
                                                                            ObjectProvider<ServerNodeChooser> serverNodeChooserObjectProvider) {
-        ProcessRefreshConfigCallBack callBack = callBackObjectProvider.getIfAvailable();
+        ConfigRefreshCallBack callBack = callBackObjectProvider.getIfAvailable();
         List<ConfigChangeHandler> configChangeHandlers = handlersObjectProvider.getIfAvailable(Collections::emptyList);
         ServerNodeChooser serverNodeChooser = serverNodeChooserObjectProvider.getIfAvailable();
         return new ConfigCenterInitializerListener(callBack, configChangeHandlers, serverNodeChooser);
@@ -115,12 +116,12 @@ public class ConfigCenterAutoConfiguration {
      */
     private class ConfigCenterInitializerListener implements ApplicationListener<ApplicationReadyEvent> {
 
-        private final ProcessRefreshConfigCallBack callBack;
+        private final ConfigRefreshCallBack callBack;
         private final List<ConfigChangeHandler> configChangeHandlers;
         private final ServerNodeChooser serverNodeChooser;
         private ConfigCenterClientInitializer initializer;
 
-        public ConfigCenterInitializerListener(ProcessRefreshConfigCallBack callBack, List<ConfigChangeHandler> handlers,
+        public ConfigCenterInitializerListener(ConfigRefreshCallBack callBack, List<ConfigChangeHandler> handlers,
                                                ServerNodeChooser serverNodeChooser) {
             this.callBack = callBack;
             this.configChangeHandlers = handlers;
